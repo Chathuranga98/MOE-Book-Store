@@ -1,0 +1,286 @@
+
+import React, { useState , useEffect } from 'react';
+import { MDBCard, MDBModal, MDBCardBody, MDBIcon, MDBCardText, MDBModalDialog ,MDBModalBody ,MDBModalFooter,MDBModalContent,MDBModalHeader,MDBModalTitle, MDBBtn, MDBCol, MDBRow , MDBCardTitle, MDBCardFooter} from 'mdb-react-ui-kit';
+import Swal from 'sweetalert2';
+import axios from 'axios';
+import {PatternFormat} from 'react-number-format';
+import Navbar from "./schoolNav";
+import Cookies from 'js-cookie';
+
+function RequestBookFromSchool() {
+    const schoolUserName =  Cookies.get('username');
+
+    function back(){
+        window.location.href = "SchoolsDashboard";
+    }
+
+    const [deoAdd, setDeoAdd] = useState(false);
+    const toggleShow = () => setDeoAdd(!deoAdd);
+
+    const [language, setLanguage] = useState("");
+    const [subject, setSubject] = useState("");
+    const [grade, setGrade] = useState("");
+    const [qty, setQty] = useState("");
+    const [school, setSchool] = useState(schoolUserName);
+    const [fromSchool, setRequestFromSchool] = useState("");
+
+    const [allSchool,setAllSchools] = useState([])
+    useEffect(() => {
+        axios.get("http://localhost:5000/school/allSchools")
+        .then(res => setAllSchools(res.data))
+        .catch(error => console.log(error));
+    },[])
+    
+   const [allBookRequest,setAllBookRequest] = useState([])
+   useEffect(() => {
+       axios.get("http://localhost:5000/book_request_from_school/allBookRequest/"+schoolUserName)
+       .then(res => setAllBookRequest(res.data))
+       .catch(error => console.log(error));
+   },[])
+
+
+   function getFromSchoolName(fromSchool){
+       const count_of_schools = allSchool.length;
+       for (let i = 0; i < count_of_schools; i++){
+           if(allSchool[i].username == fromSchool){
+             return allSchool[i].name;
+           }
+       }
+   }
+
+    function saveBookRequest() {
+        const school = schoolUserName;
+        const addBookRequest ={language, subject, grade, qty, school,fromSchool}
+
+        axios.post("http://localhost:5000/book_request_from_school/addBookRequest",addBookRequest).then(() =>{
+
+        Swal.fire({  
+            title: "Success!",
+            text: "Book Request Sending Success!",
+            icon: 'success',
+            confirmButtonText: "OK",
+            type: "success"}).then(okay => {
+                if (okay) {
+                    window.location.href = "/RequestBookFromSchool";
+                }
+        });
+
+        
+        }).catch((err)=>{
+
+            Swal.fire({  
+            title: "Error!",
+            text: "Book Request Sending  Not Success",
+            icon: 'error',
+            confirmButtonText: "OK",
+            type: "success"})
+        })
+    }
+
+    async function edit_book_qty(request_id) {
+        const { value: number } = await Swal.fire({
+            title: 'Edit Book Requesting Quantity.',
+            input: 'number',
+            inputLabel: 'Input request quantity.',
+            inputPlaceholder: ''
+          })
+          
+          if (number) {
+            const qty = number;
+            const updateBookRequest ={qty}
+
+            axios.put("http://localhost:5000/book_request_from_school/updateBookRequest/"+request_id,updateBookRequest).then(() =>{
+    
+            Swal.fire({  
+                title: "Success!",
+                text: "Book Request Updating Success!",
+                icon: 'success',
+                confirmButtonText: "OK",
+                type: "success"}).then(okay => {
+                    if (okay) {
+                        window.location.href = "/RequestBookFromSchool";
+                    }
+            });
+    
+            
+            }).catch((err)=>{
+    
+                Swal.fire({  
+                title: "Error!",
+                text: "Book Request Updating  Not Success",
+                icon: 'error',
+                confirmButtonText: "OK",
+                type: "success"})
+            })
+          }
+    }
+
+    function GetReasonForReject(req_id){  
+        const id = "school"+req_id;
+        axios.get("http://localhost:5000/book_reject_reason/oneReject/"+id)
+        .then(res => {
+            
+            Swal.fire({  
+                confirmButtonText: "OK",
+                html :'<div><h5 class="text-uppercase text-decoration-underline fw-bold">Rejection Reason</h5><p class="text-left mt-5">Order id : '+id+' </p><p class="text-left"> This book order reject because of : <br/> '+(res.data[0].comment)+'</p><div>',
+                type: "success"
+            })
+        })
+        .catch(error => console.log(error));
+    }
+
+    function Received_book_request(){
+        window.location.href = "/Received_book_request";
+    }
+
+    const [AllSubject,setAllSubject] = useState([])
+    useEffect(() => {
+        axios.get("http://localhost:5000/subject/allSubject")
+        .then(res => setAllSubject(res.data))
+        .catch(error => console.log(error));
+    },[])
+
+    
+    function formatDate(date) {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+        if (month.length < 2) 
+            month = '0' + month;
+        if (day.length < 2) 
+            day = '0' + day;
+
+        return [year, month, day].join('-');
+    }
+
+
+    
+    return (
+        <div>
+        <div class="dashboard-main-wrapper">
+            <Navbar/>
+            <div class="dashboard-wrapper">
+                <div class="container" style={{paddingTop:'3%',paddingLeft:'2%', width:'98%'}}>
+                    <h4 className="text-uppercase  d-letter-spacing fw-bold" style={{color:'black'}}><i class="fas fa-home"></i><small>School</small><br/>&nbsp;&nbsp;&nbsp;&nbsp;Dashboard</h4>
+                    <hr/>
+                    <div className="text-end">
+                        <MDBBtn color="dark" size='sm' className='shadow-0 p-2 mr-2' style={{letterSpacing:'1px'}} onClick={Received_book_request}  >Received Book Request</MDBBtn>
+                        <MDBBtn color="dark" size='sm' className='shadow-0 p-2 mr-2' style={{letterSpacing:'1px'}}  onClick={toggleShow} >Add Book Request</MDBBtn>
+                        <MDBBtn color="dark" size='sm' className='shadow-0 p-2' style={{letterSpacing:'1px'}} onClick={back} >Back</MDBBtn>
+                    </div>
+                    <MDBRow className='mt-3' >
+                    {allBookRequest.map((bookRequest,key) => (
+                        <MDBCol sm='4'>
+                            <MDBCard >
+                            <MDBCardBody>
+                                <h4>Books are requested by you from <span class="text-danger">{getFromSchoolName(bookRequest.fromSchool)}</span></h4>
+                                <h6 className='mt-3'>Requested Date : {formatDate(bookRequest.createdAt)}</h6>
+                                <h6 >Request Status : {bookRequest.status}</h6>
+                                <h6 >Subjects : {bookRequest.subject}</h6>
+                                <h6 >Grade : {bookRequest.grade}</h6>
+                                <h6 >Language : {bookRequest.language}</h6>
+                                <h6 >Request Qty : {bookRequest.qty}</h6>
+                               
+                                <MDBBtn  style={{backgroundColor:'#3E5647' , visibility:((bookRequest.status == "Accept") || (bookRequest.status == "Reject"))? "hidden" : "visible"}} size='sm' className="shadow-0 mt-3" href='#' onClick={()=>edit_book_qty(bookRequest._id)}>Edit <MDBIcon fas icon="long-arrow-alt-right" /></MDBBtn>
+                                <MDBBtn  style={{backgroundColor:'#9C4848', display:((bookRequest.status == "Reject"))? "inline" : "none"}}  size='sm' className="shadow-0 mt-3" href='#'  onClick={()=>GetReasonForReject(bookRequest._id)}>Reject Reason </MDBBtn>
+
+                            </MDBCardBody>
+                            </MDBCard>
+                        </MDBCol>
+                    ))}
+                    </MDBRow>
+                </div>
+            </div>
+            <MDBModal show={deoAdd} staticBackdrop setShow={setDeoAdd} tabIndex='-1'>
+                <MDBModalDialog size='xl'>
+                <MDBModalContent>
+                    <MDBModalHeader className="bg-dark">
+                        <MDBModalTitle className="text-white" style={{fontWeight:'200'}}>Add New Book Request</MDBModalTitle>
+                    <MDBBtn className='btn-close' color='none' onClick={toggleShow}></MDBBtn>
+                    </MDBModalHeader>
+                    <MDBModalBody className="p-5">
+                        <div class="mb-3">
+                            <h6 className="fw-normal text-dark">Your School</h6>
+                            <input type="text" class="bg-light form-control" value={school} disabled onChange={(e) =>{
+                                setSchool(e.target.value);
+                            }}/>
+                        </div>
+                        <div class="mb-3">
+                            <h6 className="fw-normal text-dark">Request From</h6>
+                            <select class="bg-light form-control" onChange={(e) =>{
+                                setRequestFromSchool(e.target.value);
+                            }}>
+                                <option value="">Select Request From</option>
+                                {allSchool.map((school,key) => (
+                                    <option value={school.username}>{school.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <h6 className="fw-normal text-dark">Medium</h6>
+                            <select  class="bg-light form-control" onChange={(e) =>{
+                                setLanguage(e.target.value);
+                            }} >
+                                <option value="" >Select Medium</option>
+                                <option value="Sinhala" >Sinhala</option>
+                                <option value="Tamil" >Tamil</option>
+                                <option value="English" >English</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <h6 className="fw-normal text-dark">Subject</h6>
+                            <select  class="bg-light form-control" onChange={(e) =>{
+                                setSubject(e.target.value);
+                            }} >
+                                <option value="" >Select Subject</option>
+                                {AllSubject.map((subject,key) => (
+                                    <option value={subject.subject_name} >{subject.subject_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <h6 className="fw-normal text-dark">Grade</h6>
+                            <select class="bg-light form-control"  onChange={(e) =>{
+                                setGrade(e.target.value);
+                            }}>
+                                <option value="" selected>Select Grade</option>
+                                <option value="1" >Grade 1</option>
+                                <option value="2" >Grade 2</option>
+                                <option value="3" >Grade 3</option>
+                                <option value="4" >Grade 4</option>
+                                <option value="5" >Grade 5</option>
+                                <option value="6" >Grade 6</option>
+                                <option value="7" >Grade 7</option>
+                                <option value="8" >Grade 8</option>
+                                <option value="9" >Grade 9</option>
+                                <option value="10" >Grade 10</option>
+                                <option value="11" >Grade 11</option>
+                                <option value="12" >Grade 12</option>
+                                <option value="13" >Grade 13</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <h6 className="fw-normal text-dark">Quantity</h6>
+                            <input type="number" class="bg-light form-control"  onChange={(e) =>{
+                                setQty(e.target.value);
+                            }}/>
+                        </div>
+                    </MDBModalBody>
+                    <MDBModalFooter>
+                    <MDBBtn color='danger' onClick={toggleShow}>
+                        Close
+                    </MDBBtn>
+                    <MDBBtn color='success' onClick={saveBookRequest}>Save</MDBBtn>
+                    </MDBModalFooter>
+                </MDBModalContent>
+                </MDBModalDialog>
+            </MDBModal>
+          </div>
+        </div>
+      )
+};
+
+
+export default RequestBookFromSchool;
