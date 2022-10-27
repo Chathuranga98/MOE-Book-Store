@@ -1,0 +1,39 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const AnnouncementSchema = new Schema({
+    title: {
+        type: String,
+        required: true,
+    },
+
+    description: {
+        type: String,
+        required: true,
+    },
+
+    divisional_office:{
+        type: String,
+        required: true
+    },
+    school:{
+        type: String,
+        required: true,
+    },
+    message:{
+        type: String,
+        required: true,
+    },
+    isAllowPrivateUsers:{
+        type: String,
+        default: "no"
+    },
+    create_by:{
+        type: String,
+        required: true,
+    }
+}, {
+timestamps: true
+});
+const Announcement_Schema = mongoose.model('Announcement', AnnouncementSchema);
+module.exports = Announcement_Schema;
