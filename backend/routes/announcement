@@ -1,0 +1,122 @@
+const router = require('express').Router();
+let announcement_model = require('../models/announcement');
+const timestamp = require('time-stamp');
+
+//Save book request
+router.route('/addAnnouncement').post((req,res) => {
+   
+    const title = req.body.title;
+    const description = req.body.description;
+    const message = req.body.message;
+    const divisional_office = req.body.divisional_office;
+    const school = req.body.school;
+    const create_by = req.body.create_by;
+    const isAllowPrivateUsers = req.body.isAllowPrivateUsers;
+
+    const announcement_save = new announcement_model({title
+       , description
+       , message
+       , divisional_office
+       , school
+       , create_by
+       , isAllowPrivateUsers});
+
+       announcement_save.save()
+        .then(() => res.json('Announcement Saving Done!'))
+        .catch((err) => {
+            console.log(err);
+            res.status(500).send({status: "Error with Deleting Data",error: err.message});
+        });
+});
+  
+//All announcement
+router.route("/allAnnouncement").get((req,res) => {
+    
+    announcement_model.find().sort({_id:-1}).then((announcement) => {
+        res.json(announcement);
+    }).catch((err) => {
+        console.log(err);
+    });
+});  
+
+  
+//All announcement for deo
+router.route("/allAnnouncementForDEO/:deo").get((req,res) => {
+    
+    announcement_model.find({ $or: [{divisional_office : req.params.deo} , {divisional_office : 'all'} ]}).sort({_id:-1}).then((announcement) => {
+        res.json(announcement);
+    }).catch((err) => {
+        console.log(err);
+    });
+});  
+
+
+//Announcement only private user
+router.route("/AnnouncementOnlyPrivateUser").get((req,res) => {
+    
+    announcement_model.find({isAllowPrivateUsers : 'yes'}).sort({_id:-1}).then((announcement) => {
+        res.json(announcement);
+    }).catch((err) => {
+        console.log(err);
+    });
+});  
+
+  
+//All announcement for school
+router.route("/allAnnouncementForSchool/:school").get((req,res) => {
+    
+    announcement_model.find({ $or: [{school : req.params.school} , {school : 'all'} ]}).sort({_id:-1}).then((announcement) => {
+        res.json(announcement);
+    }).catch((err) => {
+        console.log(err);
+    });
+});  
+
+
+
+//One announcement
+router.route("/oneAnnouncement/:ID").get((req,res) => {
+    let ID = req.params.ID; 
+    announcement_model.findById(ID).then((announcement) => {
+        res.json(announcement);
+    }).catch((err) => {
+        console.log(err);
+    });
+});   
+
+
+//Delete announcement
+router.route("/deleteAnnouncement/:ID").delete(async (req, res) => {
+    let ID = req.params.ID; 
+    announcement_model.findByIdAndDelete(ID)
+    .then(() => {
+        res.status(200).send({status :"Announcement Deleted"});
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send({status: "Error with Deleting Data",error: err.message});
+    });
+});
+
+//Update Announcement
+router.route('/updateAnnouncement/:AnnouncementID').put((req, res)=>{
+    const AnnouncementID = req.params.AnnouncementID; 
+    const title = req.body.titleEdit;
+    const description = req.body.descriptionEdit;
+    const message = req.body.messageEdit;
+    const divisional_office = req.body.divisional_officeEdit;
+    const school = req.body.schoolEdit;
+    const isAllowPrivateUsers = req.body.isAllowPrivateUsersEdit;
+
+
+    const updateAnnouncement={title,description,message,divisional_office,school,isAllowPrivateUsers}
+    announcement_model.findByIdAndUpdate(AnnouncementID,updateAnnouncement).then(() => {       
+        res.status(200).send({status :"Announcement updated"});    
+    }).catch((err) => {
+        console.log(err);
+        res.status(400).send({status: "Error with Updating Data",error: err.message});
+    });
+          
+});
+
+
+module.exports = router;
